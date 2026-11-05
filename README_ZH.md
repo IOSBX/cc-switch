@@ -22,6 +22,12 @@
 
 </div>
 
+## 本分支更新
+
+本分支基于 CC Switch 4.0.25，将 **Antigravity CLI（`agy`）** 放到原 Gemini CLI 的默认入口位置，并隐藏 Gemini CLI。旧布局中 Gemini 处于显示状态且尚未设置 `agy` 显示开关时，会自动迁移；已有明确显示设置的布局会保留。
+
+打开 Antigravity CLI 供应商卡片的「打开终端」即可启动 `agy`。使用方法、迁移条件与验证结果见 [Antigravity CLI 更新说明](docs/release-notes/antigravity-cli-default-zh.md)。
+
 ## ❤️赞助商
 
 > [想出现在这里？](mailto:support@ccswitch.io)

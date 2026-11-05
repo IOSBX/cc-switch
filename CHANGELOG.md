@@ -5,6 +5,16 @@ All notable changes to CC Switch will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Antigravity CLI as the Default Entry**: This branch places Antigravity CLI (`agy`) immediately after Codex and hides Gemini CLI by default. App selectors and page headings use the full Antigravity CLI name.
+- **Legacy Gemini Layout Migration**: When saved visibility settings enable Gemini and have no `agy` entry, startup shows Antigravity CLI instead, using Gemini's saved position when present. Existing explicit Antigravity visibility choices are preserved. Gemini provider records remain separate from Antigravity providers.
+- **Restore the Antigravity Page After Upgrade**: When the last selected app was Gemini and the loaded settings hide it while showing Antigravity, startup opens Antigravity after settings finish loading.
+
+See the [Chinese branch update notes](docs/release-notes/antigravity-cli-default-zh.md) for setup, compatibility and validation details.
+
 ## [4.0.25] - 2026-11-02
 
 This release adds on-demand MCP connectivity checks, an opt-in guard that pauses official Codex requests routed through CC Switch before the five-hour or weekly quota runs out, automatic exchange rates for the usage page, a sub-agent concurrency limit in the Codex provider form, provider and upstream model descriptions for routed and stacked models in the Claude Code and Claude Desktop model pickers, Kimi Code session deletion and GPT-6.1 Terra pricing. The local router now rejects requests sent from web pages. Fixes cover "Open terminal" inheriting proxy and stack settings, route mode putting the placeholder in `ANTHROPIC_API_KEY`, one attached document breaking every later turn on text-only upstreams, provider form values flickering on Windows, Pi MCP import and subagent usage, models.dev sync failing in proxy-only environments, forced web search rejected by xAI, the tray panel not opening during startup usage import, and mapped Codex requests counted twice.
