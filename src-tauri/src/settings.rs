@@ -39,7 +39,7 @@ pub struct VisibleApps {
     pub claude_desktop: bool,
     #[serde(default = "default_true")]
     pub codex: bool,
-    #[serde(default = "default_true")]
+    #[serde(default)]
     pub gemini: bool,
     #[serde(default = "default_true")]
     pub grokbuild: bool,
@@ -69,7 +69,7 @@ impl Default for VisibleApps {
             claude: true,
             claude_desktop: true,
             codex: true,
-            gemini: true,
+            gemini: false,
             grokbuild: true,
             opencode: true,
             openclaw: true,
@@ -937,10 +937,44 @@ fn load_settings_from_path(path: &Path) -> LoadedSettings {
         Ok(text) => (text, false),
         Err(err) => (String::from_utf8_lossy(err.as_bytes()).into_owned(), true),
     };
-    let (settings, parse_lossy) = parse_settings_lenient(&text);
+    let (mut settings, parse_lossy) = parse_settings_lenient(&text);
+    migrate_legacy_gemini_visibility(&mut settings, &text);
     LoadedSettings {
         settings,
         lossy: bad_utf8 || parse_lossy,
+    }
+}
+
+/// Older installations only knew Gemini CLI. Promote the independent agy entry once;
+/// an explicit agy visibility setting means the user has already chosen their layout.
+fn migrate_legacy_gemini_visibility(settings: &mut AppSettings, content: &str) {
+    let Some(Ok(serde_json::Value::Object(raw))) =
+        serde_json::Deserializer::from_str(content.trim_start_matches('\u{feff}'))
+            .into_iter::<serde_json::Value>()
+            .next()
+    else {
+        return;
+    };
+    let Some(visible) = raw
+        .get("visibleApps")
+        .and_then(serde_json::Value::as_object)
+    else {
+        return;
+    };
+    if visible.contains_key("agy")
+        || visible.get("gemini").and_then(serde_json::Value::as_bool) != Some(true)
+    {
+        return;
+    }
+    if let Some(apps) = settings.visible_apps.as_mut() {
+        apps.gemini = false;
+        apps.agy = true;
+        if let Some(order) = settings.app_order.as_mut() {
+            order.retain(|app| app != "agy");
+            if let Some(app) = order.iter_mut().find(|app| app.as_str() == "gemini") {
+                *app = "agy".to_string();
+            }
+        }
     }
 }
 
@@ -1616,6 +1650,78 @@ pub fn update_s3_sync_status(status: WebDavSyncStatus) -> Result<(), AppError> {
 mod tests {
     use super::*;
     use crate::app_config::AppType;
+
+    #[test]
+    fn antigravity_replaces_gemini_for_new_and_legacy_layouts() {
+        let defaults = VisibleApps::default();
+        assert!(defaults.agy);
+        assert!(!defaults.gemini);
+        let omitted: VisibleApps = serde_json::from_str("{}").unwrap();
+        assert!(omitted.agy);
+        assert!(!omitted.gemini);
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let legacy = serde_json::json!({
+            "visibleApps": { "claude": false, "codex": true, "gemini": true },
+            "appOrder": ["codex", "gemini", "claude"],
+            "currentProviderGemini": "original-provider"
+        });
+        fs::write(&path, legacy.to_string()).unwrap();
+        let loaded = load_settings_from_path(&path);
+        assert!(!loaded.lossy);
+        let apps = loaded.settings.visible_apps.as_ref().unwrap();
+        assert!(!apps.gemini);
+        assert!(apps.agy);
+        assert!(!apps.claude);
+        assert!(apps.codex);
+        assert_eq!(
+            loaded.settings.app_order.as_ref().unwrap(),
+            &["codex", "agy", "claude"]
+        );
+        assert_eq!(
+            loaded.settings.current_provider_gemini.as_deref(),
+            Some("original-provider")
+        );
+        assert!(loaded.settings.current_provider_agy.is_none());
+        assert_eq!(fs::read_to_string(&path).unwrap(), legacy.to_string());
+
+        // Once saved, explicit visibility choices survive the next startup.
+        let mut saved = loaded.settings;
+        saved.visible_apps.as_mut().unwrap().gemini = true;
+        saved.visible_apps.as_mut().unwrap().agy = false;
+        fs::write(&path, serde_json::to_vec(&saved).unwrap()).unwrap();
+        let reloaded = load_settings_from_path(&path);
+        let apps = reloaded.settings.visible_apps.unwrap();
+        assert!(apps.gemini);
+        assert!(!apps.agy);
+    }
+
+    #[test]
+    fn antigravity_migration_preserves_an_existing_agy_choice_or_hidden_gemini() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        for (visible, expected_gemini, expected_agy) in [
+            (
+                serde_json::json!({"gemini": true, "agy": false}),
+                true,
+                false,
+            ),
+            (serde_json::json!({"gemini": true, "agy": true}), true, true),
+            (serde_json::json!({"gemini": false}), false, true),
+        ] {
+            fs::write(
+                &path,
+                serde_json::json!({"visibleApps": visible}).to_string(),
+            )
+            .unwrap();
+            let loaded = load_settings_from_path(&path);
+            assert!(!loaded.lossy);
+            let apps = loaded.settings.visible_apps.unwrap();
+            assert_eq!(apps.gemini, expected_gemini);
+            assert_eq!(apps.agy, expected_agy);
+        }
+    }
 
     #[test]
     fn codex_stack_classic_tools_default_on_and_ignore_the_old_off_key() {

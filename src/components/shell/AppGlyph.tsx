@@ -17,7 +17,7 @@ export const APP_DISPLAY_NAME: Record<AppId, string> = {
   mcode: "MiniMax Code",
   kimi: "Kimi Code",
   dsh: "DeepSeek Harness",
-  agy: "Antigravity",
+  agy: "Antigravity CLI",
   omp: "Oh My Pi",
 };
 

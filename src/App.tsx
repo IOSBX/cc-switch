@@ -289,10 +289,15 @@ function App() {
   };
 
   useEffect(() => {
+    if (!settingsData) return;
     if (!visibleApps[activeApp]) {
-      setActiveApp(getFirstVisibleApp());
+      setActiveApp(
+        activeApp === "gemini" && visibleApps.agy
+          ? "agy"
+          : getFirstVisibleApp(),
+      );
     }
-  }, [visibleApps, activeApp]);
+  }, [settingsData, visibleApps, activeApp]);
 
   // 启动后把其他可见应用的供应商列表预取进缓存：第一次切过去直接有数据，不先画骨架
   const providersPrefetchedRef = useRef(false);

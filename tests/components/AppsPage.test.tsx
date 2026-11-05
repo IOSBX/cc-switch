@@ -738,7 +738,7 @@ describe("AppsPage concurrent CLI upgrades", () => {
       "gemini",
       "claude",
       "claude-desktop",
-      "grokbuild",
+      "agy",
     ]);
     expect(rowApps("appsPage.sectionNotInstalled")).toEqual([
       "hermes",

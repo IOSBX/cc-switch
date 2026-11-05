@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   APP_IDS,
+  DEFAULT_VISIBLE_APPS,
+  getAppLabel,
   orderAppIds,
   isAdditiveAppId,
   SKILLS_APP_IDS,
@@ -32,6 +34,13 @@ describe("appConfig provider lifecycle", () => {
 
 // Antigravity shares management UI, but has independent configuration and no CCS proxy.
 describe("Antigravity capabilities", () => {
+  it("replaces the default Gemini entry with Antigravity CLI", () => {
+    expect(DEFAULT_VISIBLE_APPS.agy).toBe(true);
+    expect(DEFAULT_VISIBLE_APPS.gemini).toBe(false);
+    expect(APP_IDS.indexOf("agy")).toBe(APP_IDS.indexOf("codex") + 1);
+    expect(getAppLabel("agy")).toBe("Antigravity CLI");
+  });
+
   it("supports skills and MCP with direct provider switching", () => {
     expect(SKILLS_APP_IDS).toContain("agy");
     expect(MCP_APP_IDS).toContain("agy");

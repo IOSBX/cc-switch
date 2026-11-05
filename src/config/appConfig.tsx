@@ -21,6 +21,7 @@ export const APP_IDS: AppId[] = [
   "claude",
   "claude-desktop",
   "codex",
+  "agy",
   "gemini",
   "grokbuild",
   "opencode",
@@ -30,7 +31,6 @@ export const APP_IDS: AppId[] = [
   "mcode",
   "kimi",
   "dsh",
-  "agy",
   "omp",
 ];
 
@@ -38,7 +38,7 @@ export const DEFAULT_VISIBLE_APPS: VisibleApps = {
   claude: true,
   "claude-desktop": true,
   codex: true,
-  gemini: true,
+  gemini: false,
   grokbuild: true,
   opencode: true,
   openclaw: true,
@@ -318,11 +318,11 @@ export const APP_ICON_MAP: Record<AppId, AppConfig> = {
       "bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300 hover:bg-fuchsia-500/20 border-0 gap-1.5",
   },
   agy: {
-    label: "Antigravity",
+    label: "Antigravity CLI",
     icon: (
       <ProviderIcon
         icon="antigravity"
-        name="Antigravity"
+        name="Antigravity CLI"
         size={14}
         showFallback={false}
       />
